@@ -1,4 +1,5 @@
-﻿using System.Numerics;
+﻿using System.ComponentModel;
+using System.Numerics;
 using System.Security.Cryptography;
 using System.Threading;
 
@@ -28,6 +29,9 @@ namespace TextRPG
         public string isWearingSwrod = "";
         public string isWearingArmor = "";
 
+        public Dictionary<string, string> Equiep;
+        
+
         // Player생성자
         public Player(string name, int health, int level, int exp, int attackDamage, int defense, int gold)
         {
@@ -40,17 +44,12 @@ namespace TextRPG
             this.Gold = gold;
             inventory = new List<Item>();
 
-            //isWearingSwrod = null;
-            //isWearingArmor = null;
+            var Equiep = new Dictionary<string, string>()
+            {
+                {"Swrod", ""},
+                {"Armor", ""}
+            };
         }
-
-        /*
-        // Player Inventory생성자
-        public Player()
-        {
-            inventory = new List<Item>();
-        }
-        */
 
         // player inventory에 item을 추가하는 기능 ( 상점에서 구매 )
         public void InsertItem(Player player, Item item)
@@ -60,7 +59,7 @@ namespace TextRPG
                 
                 inventory.Add(item);    // Player 인벤토리에 해당 아이템 추가.
                 player.Gold -= item.Price;  // 아이템 가격만큼 돈 차감
-                Console.WriteLine($"{item.Name}을 구매했하였습니다.     현재 Gold : {player.Gold}");
+                Console.WriteLine($"{item.Name}을 구매 하였습니다.     현재 Gold : {player.Gold}");
                 Thread.Sleep(1000);
             }
             else if(player.Gold < item.Price)
@@ -71,9 +70,16 @@ namespace TextRPG
         }
 
         // player inventory에 item을 빼는 기능 ( 상점에서 판매 )
-        public void ReleaseItem(Item item)
+        public void ReleaseItem(Player player, Item item, int numer)
         {
-            inventory.Remove(item);
+            if (player.inventory[numer] != null)
+            {
+                inventory.Remove(item);
+                player.Gold += item.Price / 2;
+                Console.WriteLine($"{item.Name}을 판매 하였습니다.     현재 Gold : {player.Gold}");
+                Thread.Sleep(1000);
+            }
+            else Console.WriteLine("아이템이 존재하지 않습니다.");
         }
 
         // item 장착 메서드
@@ -101,12 +107,6 @@ namespace TextRPG
                 player.isWearingArmor = "";  // 검을 착용한 상태로 바꿔줌.
             }
             else Console.WriteLine("이미 착용된 아이템.");
-
-        }
-
-        // item 해제 메서드
-        public void UnlockItem(Player player, Item item, int number)
-        {
 
         }
     }
@@ -323,6 +323,16 @@ namespace TextRPG
         // 상태창
         public void Statistics()
         {
+            // 장착된 아이템의 공,방어력을 담아놀 변수
+            int atk = 0;
+            int def = 0;
+            // 인벤토리에 장착된 아이템을 찾아 있으면 값을 넣어준다.
+            foreach (Item item in player.inventory)
+            {
+                if (player.isWearingSwrod == item.Name) atk = item.Effect;
+                else if (player.isWearingArmor == item.Name) def = item.Effect;
+
+            }
             // 화면 초기화
             Console.Clear();
 
@@ -335,11 +345,11 @@ namespace TextRPG
             Console.WriteLine("================================================================================");
             Console.WriteLine("                       경험치 : {0}                                             ", player.EXP);
             Console.WriteLine("================================================================================");
-            Console.WriteLine("                       공격력 : {0}                                      ", player.AttackDamage);
+            Console.WriteLine("                       공격력 : {0} + ({1})                                     ", player.AttackDamage, atk);
             Console.WriteLine("================================================================================");
-            Console.WriteLine("                       방어력 : {0} +                                  ", player.Defense);
+            Console.WriteLine("                       방어력 : {0} + ({1})                                     ", player.Defense, def);
             Console.WriteLine("================================================================================");
-            Console.WriteLine("=            메인화면으로 돌아가려면 1번을 입력해주세요.                       =");
+            Console.WriteLine("=            메인화면으로 돌아가려면 Enter를 입력해주세요.                      =");
             Console.WriteLine("================================================================================");
 
             Console.WriteLine("");
@@ -348,7 +358,7 @@ namespace TextRPG
             e = Console.ReadKey();
             switch(e.Key)
             {
-                case ConsoleKey.D1:
+                case ConsoleKey.Enter:
                     MainScene();
                     break;
                 default:
@@ -387,10 +397,13 @@ namespace TextRPG
                     Program.LowClass(player);
                     break;
                 case ConsoleKey.D2:
+                    Console.WriteLine("아직 미구현 입니다.");
                     break;
                 case ConsoleKey.D3:
+                    Console.WriteLine("아직 미구현 입니다.");
                     break;
                 case ConsoleKey.D4:
+                    Console.WriteLine("아직 미구현 입니다.");
                     break;
                 case ConsoleKey.D5:
                     MainScene();
@@ -531,6 +544,7 @@ namespace TextRPG
             while (true)
             {
                 e = Console.ReadKey();
+                Console.WriteLine("");
                 switch (e.Key)
                 {
                     case ConsoleKey.D0:
@@ -571,7 +585,66 @@ namespace TextRPG
         // 판매 상점
         public void SellShop()
         {
+            // 화면 초기화
+            Console.Clear();
 
+            while (true)
+            {
+                Console.WriteLine("[내 아이템 목록]");
+                Console.WriteLine("     이름     ㅣ     효과     ㅣ     가격     ㅣ     설명     ");
+                Console.WriteLine("");
+                for (int i = 0; i < player.inventory.Count; i++)
+                {
+                    Console.WriteLine("{0} . {1}     l{2}     l{3}     ㅣ{4}", i, player.inventory[i].Name, player.inventory[i].Effect, player.inventory[i].Price, player.inventory[i].Explanation);
+                }
+
+                Console.WriteLine("================================================================================");
+                Console.WriteLine("                    뒤로 돌아가려면 Enter를 눌러주십시오.                       ");
+                Console.WriteLine("================================================================================");
+                Console.WriteLine("                  판매를 할 때는 반값밖에 돌려받지 못합니다.                    ");
+                Console.WriteLine("================================================================================");
+                Console.WriteLine("");
+                Console.WriteLine("");
+                Console.WriteLine("판매하고 싶은 아이템의 번호를 입력해주세요.");
+                Console.Write(">> ");
+
+                e = Console.ReadKey();
+                Console.WriteLine("");
+                switch (e.Key)
+                {
+                    case ConsoleKey.D0:
+                        this.player.ReleaseItem(player, player.inventory[0], 0);   // Player클래스 아이템 구입 메서드
+                        break;
+                    case ConsoleKey.D1:
+                        this.player.ReleaseItem(player, player.inventory[1], 1);
+                        break;
+                    case ConsoleKey.D2:
+                        this.player.ReleaseItem(player, player.inventory[2], 2);
+                        break;
+                    case ConsoleKey.D3:
+                        this.player.ReleaseItem(player, player.inventory[3], 3);
+                        break;
+                    case ConsoleKey.D4:
+                        this.player.ReleaseItem(player, player.inventory[4], 4);
+                        break;
+                    case ConsoleKey.D5:
+                        this.player.ReleaseItem(player, player.inventory[5], 5);
+                        break;
+                    case ConsoleKey.D6:
+                        this.player.ReleaseItem(player, player.inventory[6], 6);
+                        break;
+                    case ConsoleKey.D7:
+                        this.player.ReleaseItem(player, player.inventory[7], 7);
+                        break;
+                    case ConsoleKey.Enter:
+                        Shop();
+                        break;
+                    default:
+                        Console.WriteLine("올바른 숫자를 입력하시오.");
+                        break;
+                }
+                Console.Clear();
+            }
         }
     }
 
