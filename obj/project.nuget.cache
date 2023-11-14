@@ -1,8 +1,11 @@
 {
   "version": 2,
-  "dgSpecHash": "Vf6tKVdlSq+OWzC5KO0nhW3DeMpaCW3LOdHkMZri6SNAXFfClR7TdqvEJwCaBMin7NbZpjjd6uMWqFojYTp6yw==",
+  "dgSpecHash": "lakvqOs+SvHFMuP1VjzQI5T9lee7R0b+FSMFoI2tk4s1h5VCzEqw2l8S+stbxclwB99HAJf+ry9MfeBeL7vnuw==",
   "success": true,
   "projectFilePath": "C:\\VS\\TextRPG\\TextRPG\\TextRPG.csproj",
-  "expectedPackageFiles": [],
+  "expectedPackageFiles": [
+    "C:\\Users\\user\\.nuget\\packages\\consoletables\\2.6.1\\consoletables.2.6.1.nupkg.sha512",
+    "C:\\Users\\user\\.nuget\\packages\\newtonsoft.json\\13.0.3\\newtonsoft.json.13.0.3.nupkg.sha512"
+  ],
   "logs": []
 }

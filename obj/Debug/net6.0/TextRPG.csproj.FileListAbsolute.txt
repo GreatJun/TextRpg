@@ -12,3 +12,7 @@ C:\VS\TextRPG\TextRPG\obj\Debug\net6.0\refint\TextRPG.dll
 C:\VS\TextRPG\TextRPG\obj\Debug\net6.0\TextRPG.pdb
 C:\VS\TextRPG\TextRPG\obj\Debug\net6.0\TextRPG.genruntimeconfig.cache
 C:\VS\TextRPG\TextRPG\obj\Debug\net6.0\ref\TextRPG.dll
+C:\VS\TextRPG\TextRPG\bin\Debug\net6.0\ConsoleTables.dll
+C:\VS\TextRPG\TextRPG\obj\Debug\net6.0\TextRPG.csproj.AssemblyReference.cache
+C:\VS\TextRPG\TextRPG\obj\Debug\net6.0\TextRPG.csproj.CopyComplete
+C:\VS\TextRPG\TextRPG\bin\Debug\net6.0\Newtonsoft.Json.dll

@@ -1,36 +1,31 @@
 ﻿using System.ComponentModel;
+using System.IO.Enumeration;
 using System.Numerics;
 using System.Security.Cryptography;
 using System.Threading;
+using System.Text.Json;
+using System.Text.Json.Serialization;
+using ConsoleTables;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace TextRPG
 {
-    public class Creature
+    public class Player
     {
-        // 이름, 체력, 레벨, 경험치, 공격력, 방어력, 장착중인 무기, 장착중인 갑옷
         public string Name { get; set; }
         public int Health { get; set; }
         public int Level { get; set; }
         public int EXP { get; set; }
-        public int AttackDamage { get; set; }
-        public int Defense { get; set; }
-        public int Gold { get; set; } 
-        // 장착중인 무기
-        // 장착중인 갑옷
-        
-        // 공격 및 피해 로직처리
-    }
+        public int AttackDamage {  get; set; }
+        public int Defense {  get; set; }
+        public int Gold { get; set; }
 
-    public class Player : Creature
-    {
         // 인벤토리 기능 리스트
         public List<Item> inventory;
 
         public string isWearingSwrod = "";
         public string isWearingArmor = "";
-
-        public Dictionary<string, string> Equiep;
-        
 
         // Player생성자
         public Player(string name, int health, int level, int exp, int attackDamage, int defense, int gold)
@@ -44,75 +39,94 @@ namespace TextRPG
             this.Gold = gold;
             inventory = new List<Item>();
 
-            var Equiep = new Dictionary<string, string>()
-            {
-                {"Swrod", ""},
-                {"Armor", ""}
-            };
+            // 초기지급 아이템
+            Item startSwrod = new Item("낡은 검", 5, 0, "여기저기 금이 가고 낡은 검이다.", Item.Equipments.Swrod);
+            Item startArmor = new Item("거적때기 옷", 1, 0, "냄새나고 낡은 옷이다", Item.Equipments.Armor);
+            inventory.Add(startSwrod);
+            inventory.Add(startArmor);
         }
 
         // player inventory에 item을 추가하는 기능 ( 상점에서 구매 )
-        public void InsertItem(Player player, Item item)
+        public void InsertItem(Item item)
         {
-            if(player.Gold >= item.Price)
+            if(this.Gold >= item.Price)
             {
                 
                 inventory.Add(item);    // Player 인벤토리에 해당 아이템 추가.
-                player.Gold -= item.Price;  // 아이템 가격만큼 돈 차감
-                Console.WriteLine($"{item.Name}을 구매 하였습니다.     현재 Gold : {player.Gold}");
+                this.Gold -= item.Price;  // 아이템 가격만큼 돈 차감
+                Console.WriteLine("{0}을 구매했습니다.", item.Name);
                 Thread.Sleep(1000);
             }
-            else if(player.Gold < item.Price)
+            else if(this.Gold < item.Price)
             {
-                Console.WriteLine($"보유한 Gold가 부족합니다.     현재 Gold : {player.Gold}");
+                Console.WriteLine($"보유한 Gold가 부족합니다.     현재 Gold : {this.Gold}");
                 Thread.Sleep(1000);
             }
         }
 
-        // player inventory에 item을 빼는 기능 ( 상점에서 판매 )
-        public void ReleaseItem(Player player, Item item, int numer)
+        // player inventory에 item을 빼는 기능 ( 상점에 판매 )
+        public void ReleaseItem(int index)
         {
-            if (player.inventory[numer] != null)
+            if (this.inventory[index] != null)
             {
-                inventory.Remove(item);
-                player.Gold += item.Price / 2;
-                Console.WriteLine($"{item.Name}을 판매 하였습니다.     현재 Gold : {player.Gold}");
-                Thread.Sleep(1000);
+                inventory.Remove(this.inventory[index]);
+                this.Gold += this.inventory[index].Price / 2;
             }
             else Console.WriteLine("아이템이 존재하지 않습니다.");
         }
 
         // item 장착 메서드
-        public void EquipItem(Player player, int number)
+        public void EquipItem(int number)
         {
-            // 검을 착용한 상태가 아니고, 아이템 타입이 검일때
-            if (player.isWearingSwrod == "" && player.inventory[number].equipments == Item.Equipments.Swrod)
-            {
-                player.AttackDamage += player.inventory[number].Effect; // 장비 수치만큼 플레이어 능력치를 더함
-                player.isWearingSwrod = player.inventory[number].Name;  // 검을 착용한 상태로 바꿔줌.
-            }
-            else if(player.isWearingArmor == "" && player.inventory[number].equipments == Item.Equipments.Armor)
-            {
-                player.Defense += player.inventory[number].Effect; // 장비 수치만큼 플레이어 능력치를 더함
-                player.isWearingArmor = player.inventory[number].Name;  // 검을 착용한 상태로 바꿔줌.
-            }
-            else if (player.inventory[number].equipments == Item.Equipments.Swrod)
-            {
-                player.AttackDamage -= player.inventory[number].Effect; // 장비 수치만큼 플레이어 능력치를 빼줌
-                player.isWearingSwrod = "";  // 검을 해제한 상태로 바꿈
-            }
-            else if (player.inventory[number].equipments == Item.Equipments.Armor)
-            {
-                player.Defense -= player.inventory[number].Effect; // 장비 수치만큼 플레이어 능력치를 더함
-                player.isWearingArmor = "";  // 검을 착용한 상태로 바꿔줌.
-            }
-            else Console.WriteLine("이미 착용된 아이템.");
+            Item item = this.inventory[number];
 
+            if(item.equipments == Item.Equipments.Swrod)
+            {
+                this.AttackDamage = ToggleEquipmentState(ref isWearingSwrod, this.AttackDamage, item);
+            }
+            else if(item.equipments == Item.Equipments.Armor)
+            {
+                this.Defense = ToggleEquipmentState(ref isWearingArmor, this.Defense, item);
+            }
+        }
+
+        private int ToggleEquipmentState(ref string isWearing, int stat, Item item)
+        {
+            if(isWearing == "")
+            {
+                stat += item.Effect;
+                isWearing = item.Name;
+            }
+            else
+            {
+                stat -= item.Effect;
+                isWearing = "";
+            }
+            return stat;
+        }
+
+        // 레벨업 메서드
+        public void LevelUp()
+        {
+            // 레벨업시 체력10, 공격력5, 방어력1 증가
+            this.Level++;
+            this.Health += 10;
+            this.AttackDamage += 5;
+            this.Defense += 1;
+        }
+
+        // player 공격 메서드
+        public int playerAttack(Monster enemy)
+        {
+            if (this.AttackDamage < enemy.Defense) return 0;    // 몬스터의 방어력이 플레이어의 공격력보다 높으면 0으로 변화없음
+            else return this.AttackDamage - enemy.Defense;
         }
     }
 
     public class Enemy
     {
+        #region Later
+        /*
         // 하급던전 몬스터
         public Monster Goblin { get; set; } // 고블린
         public Monster Ork { get; set; } // 오크
@@ -135,18 +149,27 @@ namespace TextRPG
         public Monster Belphegor { get; set; } // 나태의 벨페고르
         public Monster Satan {  get; set; } // 분노의 사탄
 
+        시간이 부족해서 구현불가 입니다....
+        */
+        #endregion
+
 
         // Enemy 생성자
-        public Enemy(Monster goblin, Monster ork)
+        public Enemy()
         {
-            this.Goblin = goblin;
-            this.Ork = ork;
+
+        }
+
+        // Enemy 공격 메서드
+        public int enemyAttack(Player player, Monster monster)
+        {
+            if (player.Defense > monster.AttackDamage) return 0;
+            else return monster.AttackDamage - player.Defense;
         }
     }
 
     public class GameManager
     {
-        // public static GameManager manager = new GameManager();
         #region itemSpawner
 
         #endregion
@@ -158,22 +181,26 @@ namespace TextRPG
         public int choiceNumber {  get; set; }
         
         // Player그릇
-        public Player player {  get; set; }
+        public static Player player {  get; set; }
         // ItemManager 그릇
         public ItemManager itemManager { get; set; }
 
         // GameManager 생성자
         public GameManager()
         {
-            // Player 객체 생성
-            player = new Player("Juno", 100, 1, 0, 10, 0, 100000);
+            // Player객체 생성
+            player = new Player("Juno", 100, 1, 0, 10, 0, 10000);
             // ItemManager 객체 생성
             itemManager = new ItemManager();
         }
 
+        
+
         // 1. 타이틀 화면
         public void TitleScene()
         {
+            string[] text = {"1 . 시작하기", "2 . 이어하기", "3 . 종료하기"};
+
             // 화면 초기화
             Console.Clear();
 
@@ -188,9 +215,10 @@ namespace TextRPG
             Console.WriteLine("=                                                                              =");
             Console.WriteLine("=                                                       Main by - GreatJun     =");
             Console.WriteLine("================================================================================");
-            Console.WriteLine("=========================    1 . 시작하기    ===================================");
-            Console.WriteLine("=========================    2 . 이어하기    ===================================");
-            Console.WriteLine("=========================    3 . 종료하기    ===================================");
+            for(int i = 0; i < text.Length; i++)
+            {
+                Console.WriteLine($"=========================    {text[i]}    ===================================");
+            }
             Console.WriteLine("================================================================================");
 
             Console.WriteLine("");
@@ -203,10 +231,13 @@ namespace TextRPG
                     StroyScene();
                     break;
                 case ConsoleKey.D2:
-                    // 미구현
-                    Console.WriteLine("아직 미구현 입니다.");
+                    // C:\JsonTest 경로 안에있는 save.json 파일을 string read에 넣는다.(파일 읽기)
+                    string read = File.ReadAllText(@"C:\JsonTest\save.json");
+                    // json문자열을 Player클래스 객체 player로 변환
+                    player = JsonConvert.DeserializeObject<Player>(read);
+                    Console.WriteLine("불러오는중 입니다.");
                     Thread.Sleep(1500);
-                    TitleScene();
+                    MainScene();
                     break;
                 case ConsoleKey.D3:
                     Console.WriteLine("종료합니다...");
@@ -283,6 +314,7 @@ namespace TextRPG
             Console.WriteLine("=========================    3 . 상점        ===================================");
             Console.WriteLine("=========================    4 . 던전        ===================================");
             Console.WriteLine("=========================    5 . 타이틀 화면 ===================================");
+            Console.WriteLine("=========================    6 . 저장하기    ===================================");
             Console.WriteLine("================================================================================");
 
             Console.WriteLine("");
@@ -310,6 +342,16 @@ namespace TextRPG
                 case ConsoleKey.D5:
                     Console.Clear();
                     TitleScene();
+                    break;
+                case ConsoleKey.D6:
+                    // Json
+                    //player클래스를 Json 객체로 생성 ( List를 Json으로 변환 )
+                    string save = JsonConvert.SerializeObject(player);
+                    // Json 저장경로 및 저장
+                    File.WriteAllText(@"C:\JsonTest\save.json", save.ToString());
+                    Console.WriteLine("저장중 입니다...");
+                    Thread.Sleep(1000);
+                    MainScene();
                     break;
                 default:
                     Console.Clear();
@@ -349,6 +391,8 @@ namespace TextRPG
             Console.WriteLine("================================================================================");
             Console.WriteLine("                       방어력 : {0} + ({1})                                     ", player.Defense, def);
             Console.WriteLine("================================================================================");
+            Console.WriteLine("                       Gold : {0}                                               ", player.Gold);
+            Console.WriteLine("================================================================================");
             Console.WriteLine("=            메인화면으로 돌아가려면 Enter를 입력해주세요.                      =");
             Console.WriteLine("================================================================================");
 
@@ -376,15 +420,17 @@ namespace TextRPG
             Console.Clear();
 
             Console.WriteLine("================================================================================");
-            Console.WriteLine("=                       1. 하급던전                                            =");
+            Console.WriteLine("=                            1. 하급던전                                       =");
             Console.WriteLine("================================================================================");
-            Console.WriteLine("=                       2. 중급던전                                            =");
+            Console.WriteLine("=                            2. 중급던전                                       =");
             Console.WriteLine("================================================================================");
-            Console.WriteLine("=                       3. 상급던전                                            =");
+            Console.WriteLine("=                            3. 상급던전                                       =");
             Console.WriteLine("================================================================================");
-            Console.WriteLine("=                       4.   지옥                                              =");
+            Console.WriteLine("=                            4.   지옥                                         =");
             Console.WriteLine("================================================================================");
-            Console.WriteLine("=                       5. 메인화면                                            =");
+            Console.WriteLine("=                            5. 메인화면                                       =");
+            Console.WriteLine("================================================================================");
+            Console.WriteLine("=               체력은 던전에서 나오면 자동으로 회복됩니다.                    =");
             Console.WriteLine("================================================================================");
 
             Console.WriteLine(" ");
@@ -398,12 +444,18 @@ namespace TextRPG
                     break;
                 case ConsoleKey.D2:
                     Console.WriteLine("아직 미구현 입니다.");
+                    Thread.Sleep(1500);
+                    MainScene();
                     break;
                 case ConsoleKey.D3:
                     Console.WriteLine("아직 미구현 입니다.");
+                    Thread.Sleep(1500);
+                    MainScene();
                     break;
                 case ConsoleKey.D4:
                     Console.WriteLine("아직 미구현 입니다.");
+                    Thread.Sleep(1500);
+                    MainScene();
                     break;
                 case ConsoleKey.D5:
                     MainScene();
@@ -419,66 +471,106 @@ namespace TextRPG
             // 화면 초기화
             Console.Clear();
 
-            while (true)
+            ConsoleTable inventoryTable = new ConsoleTable("순서","이름", "효과", "가격", "설명");
+
+            Console.WriteLine("[아이템 목록]");
+            Console.WriteLine("");
+            string isEquipment = "";
+            for (int i = 0; i < player.inventory.Count; i++)
             {
-                Console.WriteLine("[아이템 목록]");
-                Console.WriteLine("     이름     ㅣ     효과     ㅣ     가격     ㅣ     설명     ");
-                Console.WriteLine("");
-                string isEquipment = "";
-                for (int i = 0; i < player.inventory.Count; i++)
-                {
-                    if (player.isWearingSwrod == player.inventory[i].Name || player.isWearingArmor == player.inventory[i].Name) isEquipment = "[E]";
-                    else isEquipment = "";
-                    Console.WriteLine("{0} . {1} {2}     l{3}     l{4}     l{5}", i, isEquipment, player.inventory[i].Name, player.inventory[i].Effect, player.inventory[i].Price, player.inventory[i].Explanation);
-                }
-
-                Console.WriteLine("");
-                Console.WriteLine("================================================================================");
-                Console.WriteLine("                        착용할 아이템을 골라주십시오.                           ");
-                Console.WriteLine("================================================================================");
-                Console.WriteLine("                    뒤로 돌아가려면 Enter를 눌러주십시오.                       ");
-                Console.WriteLine("================================================================================");
-                Console.WriteLine("");
-                Console.Write(">> ");
-
-                e = Console.ReadKey();
-                switch (e.Key)
-                {
-                    case ConsoleKey.D0:
-                        player.EquipItem(player, 0);
-                        break;
-                    case ConsoleKey.D1:
-                        player.EquipItem(player, 1);
-                        break;
-                    case ConsoleKey.D2:
-                        player.EquipItem(player, 2);
-                        break;
-                    case ConsoleKey.D3:
-                        player.EquipItem(player, 3);
-                        break;
-                    case ConsoleKey.D4:
-                        player.EquipItem(player, 4);
-                        break;
-                    case ConsoleKey.D5:
-                        player.EquipItem(player, 5);
-                        break;
-                    case ConsoleKey.D6:
-                        player.EquipItem(player, 6);
-                        break;
-                    case ConsoleKey.D7:
-                        player.EquipItem(player, 7);
-                        break;
-                    case ConsoleKey.D8:
-                        player.EquipItem(player, 8);
-                        break;
-                    case ConsoleKey.Enter:
-                        MainScene();
-                        break;
-                    default:
-                        break;
-                }
-                Console.Clear();
+                if (player.isWearingSwrod == player.inventory[i].Name || player.isWearingArmor == player.inventory[i].Name) isEquipment = "[E]";
+                else isEquipment = "";
+                inventoryTable.AddRow($"{i}", $"{isEquipment} {player.inventory[i].Name}", $"{player.inventory[i].Effect}", $"{player.inventory[i].Price}", $"{player.inventory[i].Explanation}").Configure(o => o.EnableCount = false);
             }
+            inventoryTable.Write();
+
+            Console.WriteLine("");
+            Console.WriteLine("================================================================================");
+            Console.WriteLine("                        착용할 아이템을 골라주십시오.                           ");
+            Console.WriteLine("================================================================================");
+            Console.WriteLine("                    뒤로 돌아가려면 Enter를 눌러주십시오.                       ");
+            Console.WriteLine("================================================================================");
+            Console.WriteLine("");
+            Console.Write(">> ");
+            e = Console.ReadKey();
+
+            int x = int.Parse(e.KeyChar.ToString());    // ConsoleKeyInfo값을 char형으로 변환 후 string으로 변환 후 int.Parse하여 정수로 변환한 값을 x에 대입.
+            if (x > player.inventory.Count)
+            {
+                Console.WriteLine("올바른 수를 입력하시오.");
+                Thread.Sleep(1000);
+                Inventory();
+                return;
+            }
+            switch (e.Key)
+            {
+                case ConsoleKey.D0:
+                    player.EquipItem(0);
+                    Inventory();
+                    break;
+                case ConsoleKey.D1:
+                    player.EquipItem(1);
+                    Inventory();
+                    break;
+                case ConsoleKey.D2:
+                    player.EquipItem(2);
+                    Inventory();
+                    break;
+                case ConsoleKey.D3:
+                    player.EquipItem(3);
+                    Inventory();
+                    break;
+                case ConsoleKey.D4:
+                    player.EquipItem(4);
+                    Inventory();
+                    break;
+                case ConsoleKey.D5:
+                    player.EquipItem(5);
+                    Inventory();
+                    break;
+                case ConsoleKey.D6:
+                    player.EquipItem(6);
+                    Inventory();
+                    break;
+                case ConsoleKey.D7:
+                    player.EquipItem(7);
+                    Inventory();
+                    break;
+                case ConsoleKey.D8:
+                    player.EquipItem(8);
+                    Inventory();
+                    break;
+                case ConsoleKey.DownArrow:
+                    // OrderBy를 이용한 이름 내림차순 정렬
+                    player.inventory = player.inventory.OrderBy(item => item.Name).ToList();
+                    Inventory();
+                    break;
+                case ConsoleKey.UpArrow:
+                    // OrderByDescending를 이용한 이름 오름차순 정렬
+                    player.inventory = player.inventory.OrderByDescending(item => item.Name).ToList();
+                    Inventory();
+                    break;
+                case ConsoleKey.RightArrow:
+                    // LINQ를 이용한 아이템 능력치 내림차순 정렬
+                    player.inventory = (from item in player.inventory
+                                        orderby item.Effect
+                                        select item).ToList();
+                    Inventory();
+                    break;
+                case ConsoleKey.LeftArrow:
+                    // LINQ를 이용한 아이템 장비종류(Enum)(Swrod, Armor) 오름차순 정렬
+                    player.inventory = (from item in player.inventory
+                                        orderby item.equipments descending
+                                        select item).ToList();
+                    Inventory();
+                    break;
+                case ConsoleKey.Enter:
+                    MainScene();
+                    break;
+                default:
+                    break;
+            }
+
         }
 
         // 상점 입구
@@ -524,19 +616,20 @@ namespace TextRPG
             // 화면 초가화
             Console.Clear();
 
+            ConsoleTable buyShopTable = new ConsoleTable("순서", "이름", "효과", "가격", "설명");
+
             Console.WriteLine("[상점 목록]");
-            Console.WriteLine("     이름     ㅣ     효과     ㅣ     가격     ㅣ     설명     ");
+            Console.WriteLine("현재 소지Gold : {0}", player.Gold);
             Console.WriteLine("");
 
             for(int i = 0; i < itemManager.items.Count; i++)
             {
-                Console.WriteLine("{0} . {1}     l{2}     l{3}     ㅣ{4}", i, itemManager.items[i].Name, itemManager.items[i].Effect, itemManager.items[i].Price, itemManager.items[i].Explanation);   // 아이템 이름, 효과, 가격, 설명
+                buyShopTable.AddRow($"{i}", $"{itemManager.items[i].Name}", $"{itemManager.items[i].Effect}", $"{itemManager.items[i].Price}", $"{itemManager.items[i].Explanation}").Configure(o => o.EnableCount = false);   // 아이템 이름, 효과, 가격, 설명
             }
-
+            buyShopTable.Write();
             Console.WriteLine("================================================================================");
             Console.WriteLine("                    뒤로 돌아가려면 Enter를 눌러주십시오.                       ");
             Console.WriteLine("================================================================================");
-            Console.WriteLine("");
             Console.WriteLine("");
             Console.WriteLine("구입하고 싶은 아이템의 번호를 입력해주세요.");
             Console.Write(">> ");
@@ -548,28 +641,36 @@ namespace TextRPG
                 switch (e.Key)
                 {
                     case ConsoleKey.D0:
-                        this.player.InsertItem(player, itemManager.items[0]);   // Player클래스 아이템 구입 메서드
+                        player.InsertItem(itemManager.items[0]);   // Player클래스 아이템 구입 메서드
+                        BuyShop();
                         break;
                     case ConsoleKey.D1:
-                        this.player.InsertItem(player, itemManager.items[1]);
+                        player.InsertItem(itemManager.items[1]);
+                        BuyShop();
                         break;
                     case ConsoleKey.D2:
-                        this.player.InsertItem(player, itemManager.items[2]);
+                        player.InsertItem(itemManager.items[2]);
+                        BuyShop();
                         break;
                     case ConsoleKey.D3:
-                        this.player.InsertItem(player, itemManager.items[3]);
+                        player.InsertItem(itemManager.items[3]);
+                        BuyShop();
                         break;
                     case ConsoleKey.D4:
-                        this.player.InsertItem(player, itemManager.items[4]);
+                        player.InsertItem(itemManager.items[4]);
+                        BuyShop();
                         break;
                     case ConsoleKey.D5:
-                        this.player.InsertItem(player, itemManager.items[5]);
+                        player.InsertItem(itemManager.items[5]);
+                        BuyShop();
                         break;
                     case ConsoleKey.D6:
-                        this.player.InsertItem(player, itemManager.items[6]);
+                        player.InsertItem(itemManager.items[6]);
+                        BuyShop();
                         break;
                     case ConsoleKey.D7:
-                        this.player.InsertItem(player, itemManager.items[7]);
+                        player.InsertItem(itemManager.items[7]);
+                        BuyShop();
                         break;
                     case ConsoleKey.Enter:
                         Shop();
@@ -588,63 +689,71 @@ namespace TextRPG
             // 화면 초기화
             Console.Clear();
 
-            while (true)
+            ConsoleTable shellShop = new ConsoleTable("순서", "이름", "효과", "가격", "설명");
+
+
+            Console.WriteLine("[내 아이템 목록]");
+            Console.WriteLine("현재 소지Gold : {0}", player.Gold);
+            Console.WriteLine("");
+            for (int i = 0; i < player.inventory.Count; i++)
             {
-                Console.WriteLine("[내 아이템 목록]");
-                Console.WriteLine("     이름     ㅣ     효과     ㅣ     가격     ㅣ     설명     ");
-                Console.WriteLine("");
-                for (int i = 0; i < player.inventory.Count; i++)
-                {
-                    Console.WriteLine("{0} . {1}     l{2}     l{3}     ㅣ{4}", i, player.inventory[i].Name, player.inventory[i].Effect, player.inventory[i].Price, player.inventory[i].Explanation);
-                }
-
-                Console.WriteLine("================================================================================");
-                Console.WriteLine("                    뒤로 돌아가려면 Enter를 눌러주십시오.                       ");
-                Console.WriteLine("================================================================================");
-                Console.WriteLine("                  판매를 할 때는 반값밖에 돌려받지 못합니다.                    ");
-                Console.WriteLine("================================================================================");
-                Console.WriteLine("");
-                Console.WriteLine("");
-                Console.WriteLine("판매하고 싶은 아이템의 번호를 입력해주세요.");
-                Console.Write(">> ");
-
-                e = Console.ReadKey();
-                Console.WriteLine("");
-                switch (e.Key)
-                {
-                    case ConsoleKey.D0:
-                        this.player.ReleaseItem(player, player.inventory[0], 0);   // Player클래스 아이템 구입 메서드
-                        break;
-                    case ConsoleKey.D1:
-                        this.player.ReleaseItem(player, player.inventory[1], 1);
-                        break;
-                    case ConsoleKey.D2:
-                        this.player.ReleaseItem(player, player.inventory[2], 2);
-                        break;
-                    case ConsoleKey.D3:
-                        this.player.ReleaseItem(player, player.inventory[3], 3);
-                        break;
-                    case ConsoleKey.D4:
-                        this.player.ReleaseItem(player, player.inventory[4], 4);
-                        break;
-                    case ConsoleKey.D5:
-                        this.player.ReleaseItem(player, player.inventory[5], 5);
-                        break;
-                    case ConsoleKey.D6:
-                        this.player.ReleaseItem(player, player.inventory[6], 6);
-                        break;
-                    case ConsoleKey.D7:
-                        this.player.ReleaseItem(player, player.inventory[7], 7);
-                        break;
-                    case ConsoleKey.Enter:
-                        Shop();
-                        break;
-                    default:
-                        Console.WriteLine("올바른 숫자를 입력하시오.");
-                        break;
-                }
-                Console.Clear();
+                shellShop.AddRow($"{i}", $"{player.inventory[i].Name}", $"{player.inventory[i].Effect}", $"{player.inventory[i].Price}", $"{player.inventory[i].Explanation}").Configure(o => o.EnableCount = false);
             }
+
+            shellShop.Write();
+            Console.WriteLine("================================================================================");
+            Console.WriteLine("                    뒤로 돌아가려면 Enter를 눌러주십시오.                       ");
+            Console.WriteLine("================================================================================");
+            Console.WriteLine("                  판매를 할 때는 반값밖에 돌려받지 못합니다.                    ");
+            Console.WriteLine("================================================================================");
+            Console.WriteLine("");
+            Console.WriteLine("판매하고 싶은 아이템의 번호를 입력해주세요.");
+            Console.Write(">> ");
+
+            e = Console.ReadKey();
+            Console.WriteLine("");
+            switch (e.Key)
+            {
+                case ConsoleKey.D0:
+                    player.ReleaseItem(0);   // Player클래스 아이템 구입 메서드
+                    SellShop();
+                    break;
+                case ConsoleKey.D1:
+                    player.ReleaseItem(1);
+                    SellShop();
+                    break;
+                case ConsoleKey.D2:
+                    player.ReleaseItem(2);
+                    SellShop();
+                    break;
+                case ConsoleKey.D3:
+                    player.ReleaseItem(3);
+                    SellShop();
+                    break;
+                case ConsoleKey.D4:
+                    player.ReleaseItem(4);
+                    SellShop();
+                    break;
+                case ConsoleKey.D5:
+                    player.ReleaseItem(5);
+                    SellShop();
+                    break;
+                case ConsoleKey.D6:
+                    player.ReleaseItem(6);
+                    SellShop();
+                    break;
+                case ConsoleKey.D7:
+                    player.ReleaseItem(7);
+                    SellShop();
+                    break;
+                case ConsoleKey.Enter:
+                    Shop();
+                    break;
+                default:
+                    Console.WriteLine("올바른 숫자를 입력하시오.");
+                    break;
+            }
+            Console.Clear();
         }
     }
 
@@ -736,20 +845,21 @@ namespace TextRPG
 
         public static GameManager _gameManager;
 
+        public static Enemy _enemy;
+
+
         // 선택번호 변수
         static public int choiceNumber = 0;
 
         static void Main(string[] args)
         {
-            // Monster 객체 생성
-            Monster Goblin = new Monster("Goblin", 30, 5, 0);   // Goblin Object
-            Monster Ork = new Monster("Ork", 300, 20, 10);    // Ork Object
-
-            // Enemy 객체 생성
-            Enemy enemy = new Enemy(Goblin, Ork);
-
             // GameManager 객체 생성
             _gameManager = new GameManager();
+
+
+
+            // Enemy 객체 생성
+            _enemy = new Enemy();
 
             // 게임 시작
             // 시작화면 호출
@@ -759,6 +869,9 @@ namespace TextRPG
         // 던전 종류
         static public void LowClass(Player player)
         {
+            // player초기 체력 저장
+            int firstHealth = player.Health;
+
             // 웨이브 수
             int wave = 5;
             
@@ -802,12 +915,14 @@ namespace TextRPG
                     switch (e.Key)
                     {
                         case ConsoleKey.D1:
-                            Console.WriteLine("{0}에게 {1}의 데미지를 입혔다!", Goblin.Name, player.AttackDamage - Goblin.Defense);
-                            Goblin.Health -= (player.AttackDamage - Goblin.Defense);
+                            Console.WriteLine("{0}에게 {1}의 데미지를 입혔다!", Goblin.Name, (player.AttackDamage - Goblin.Defense) < 0 ? 0 : (player.AttackDamage - Goblin.Defense));
+                            Goblin.Health -= player.playerAttack(Goblin);   // player 공격 메서드
+ 
                             Thread.Sleep(100);
                             Console.WriteLine("");
-                            Console.WriteLine("{0}이 {1}한테 {2}의 데미지를 입혔다...", Goblin.Name, player.Name, Goblin.AttackDamage - player.Defense);
-                            player.Health -= (Goblin.AttackDamage - player.Defense);
+                            Console.WriteLine("{0}이 {1}한테 {2}의 데미지를 입혔다...", Goblin.Name, player.Name, (Goblin.AttackDamage - player.Defense) < 0 ? 0 : (Goblin.AttackDamage - player.Defense));
+                            player.Health -= _enemy.enemyAttack(player, Goblin);    // Enemy 공격 메서드
+
                             Thread.Sleep(100);
                             Console.WriteLine("");
                             if (player.Health <= 0)
@@ -815,7 +930,10 @@ namespace TextRPG
                                 player.Health = 0;
                                 Console.WriteLine("{0}이 사망하였습니다...", player.Name);
                                 Thread.Sleep(3000);
+                                // 죽음 체크
                                 isPlayer = false;
+                                // 플레이어 체력 회복
+                                player.Health = firstHealth;
                                 // 타이틀 화면으로 이동
                                 _gameManager.TitleScene();
                             }
@@ -839,6 +957,8 @@ namespace TextRPG
                             Console.Clear();
                             Console.WriteLine("전속력으로 도망갔다.");
                             Thread.Sleep(1000);
+                            // 플레이어 체력 회복
+                            player.Health = firstHealth;
                             // 타이틀 화면으로 이동
                             _gameManager.MainScene();
                             break;
@@ -859,8 +979,8 @@ namespace TextRPG
 
             Console.WriteLine("===================================================");
             Console.WriteLine("===================================================");
+            Console.WriteLine("하급던전의 주인 {0}와 마주쳤다...", Ork.Name);
             Console.WriteLine("===================================================");
-            Console.WriteLine("하급던전의 주인 {0}와 마주쳤다...");
             while (isMonster && isPlayer)
             {
                 Console.WriteLine("===================================================");
@@ -875,12 +995,14 @@ namespace TextRPG
                 switch(e.Key)
                 {
                     case ConsoleKey.D1:
-                        Console.WriteLine("{0}에게 {1}의 데미지를 입혔다!", Ork.Name, player.AttackDamage - Ork.Defense);
-                        Ork.Health -= (player.AttackDamage - Ork.Defense);
+                        Console.WriteLine("{0}에게 {1}의 데미지를 입혔다!", Ork.Name, (player.AttackDamage - Ork.Defense) < 0 ? 0 : (player.AttackDamage - Ork.Defense));
+                        Ork.Health -= player.playerAttack(Ork);   // player 공격 메서드
+
                         Thread.Sleep(100);
                         Console.WriteLine("");
-                        Console.WriteLine("{0}이 {1}한테 {2}의 데미지를 입혔다...", Ork.Name, player.Name, Ork.AttackDamage - player.Defense);
-                        player.Health -= (Ork.AttackDamage - player.Defense);
+                        Console.WriteLine("{0}이 {1}한테 {2}의 데미지를 입혔다...", Ork.Name, player.Name, (Ork.AttackDamage - player.Defense) < 0 ? 0 : Ork.AttackDamage - player.Defense);
+                        player.Health -= _enemy.enemyAttack(player, Ork);    // Enemy 공격 메서드
+
                         Thread.Sleep(100);
                         Console.WriteLine("");
                         if (player.Health <= 0)
@@ -889,6 +1011,8 @@ namespace TextRPG
                             Console.WriteLine("{0}이 사망하였습니다...", player.Name);
                             Thread.Sleep(3000);
                             isPlayer = false;
+                            // 플레이어 체력 회복
+                            player.Health = firstHealth;
                             // 타이틀 화면으로 이동
                             _gameManager.TitleScene();
 
@@ -899,8 +1023,15 @@ namespace TextRPG
                             Console.WriteLine("{0}을 잡았습니다!", Ork.Name);
                             player.Gold += 500;
                             Console.WriteLine("500Gold를 얻었습니다.");
+                            Console.WriteLine("");
+                            // 플레이어 체력 회복
+                            player.Health = firstHealth;
+                            // Player Level Up
+                            player.LevelUp();
+                            Console.WriteLine("Level UP !!!   Level : {0} -> Level : {1} ", player.Level - 1, player.Level);
                             Thread.Sleep(2000);
                             isMonster = false;
+                            _gameManager.MainScene();
                             break;
                         }
                         else
@@ -908,12 +1039,14 @@ namespace TextRPG
                             Thread.Sleep(2000);
                             Console.Clear();
                         }
-
+                        
                         break;
                     case ConsoleKey.D2:
                         Console.Clear();
                         Console.WriteLine("전속력으로 도망갔다.");
                         Thread.Sleep(1000);
+                        // 플레이어 체력 회복
+                        player.Health = firstHealth;
                         // 타이틀 화면으로 이동
                         _gameManager.MainScene();
                         break;
