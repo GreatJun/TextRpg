@@ -494,14 +494,6 @@ namespace TextRPG
             Console.Write(">> ");
             e = Console.ReadKey();
 
-            int x = int.Parse(e.KeyChar.ToString());    // ConsoleKeyInfo값을 char형으로 변환 후 string으로 변환 후 int.Parse하여 정수로 변환한 값을 x에 대입.
-            if (x > player.inventory.Count)
-            {
-                Console.WriteLine("올바른 수를 입력하시오.");
-                Thread.Sleep(1000);
-                Inventory();
-                return;
-            }
             switch (e.Key)
             {
                 case ConsoleKey.D0:
