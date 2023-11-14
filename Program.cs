@@ -8,6 +8,8 @@ using System.Text.Json.Serialization;
 using ConsoleTables;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using System.ComponentModel.Design;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace TextRPG
 {
@@ -149,7 +151,7 @@ namespace TextRPG
         public Monster Belphegor { get; set; } // 나태의 벨페고르
         public Monster Satan {  get; set; } // 분노의 사탄
 
-        시간이 부족해서 구현불가 입니다....
+        시간이 부족해서 최적화를 못했습니다....
         */
         #endregion
 
@@ -194,87 +196,234 @@ namespace TextRPG
             itemManager = new ItemManager();
         }
 
-        
+
 
         // 1. 타이틀 화면
         public void TitleScene()
         {
-            string[] text = {"1 . 시작하기", "2 . 이어하기", "3 . 종료하기"};
+            string[] text = { "1 . 시작하기", "2 . 이어하기", "3 . 종료하기" };
 
-            // 화면 초기화
-            Console.Clear();
+            // 커서 좌표 초기설정
+            int cursor = 0;
 
-            Console.WriteLine("================================================================================");
-            Console.WriteLine("=                         C# Console Game RPG                                  =");
-            Console.WriteLine("=                                                                              =");
-            Console.WriteLine("=                                                                              =");
-            Console.WriteLine("=            C #                              R-o l e                          =");
-            Console.WriteLine("=             C o n s o l e                     P-l a y i n g                  =");
-            Console.WriteLine("=              G a m e                            G-a m e                      =");
-            Console.WriteLine("=                                                                              =");
-            Console.WriteLine("=                                                                              =");
-            Console.WriteLine("=                                                       Main by - GreatJun     =");
-            Console.WriteLine("================================================================================");
-            for(int i = 0; i < text.Length; i++)
+            bool onScene = true;
+            while (onScene)
             {
-                Console.WriteLine($"=========================    {text[i]}    ===================================");
+                // 화면 초기화
+                Console.Clear();
+
+                Console.WriteLine("================================================================================");
+                Console.WriteLine("=                         C# Console Game RPG                                  =");
+                Console.WriteLine("=                                                                              =");
+                Console.WriteLine("=                                                                              =");
+                Console.WriteLine("=            C #                              R-o l e                          =");
+                Console.WriteLine("=             C o n s o l e                     P-l a y i n g                  =");
+                Console.WriteLine("=              G a m e                            G-a m e                      =");
+                Console.WriteLine("=                                                                              =");
+                Console.WriteLine("=                                                                              =");
+                Console.WriteLine("=                                                       Main by - GreatJun     =");
+                Console.WriteLine("================================================================================");
+                for (int i = 0; i < text.Length; i++)
+                {
+                    if (cursor == i)
+                    {
+                        Console.ForegroundColor = ConsoleColor.Red;
+                    }
+                    Console.WriteLine($"=========================    {text[i]}    ===================================");
+                    Console.ResetColor();
+                }
+                Console.WriteLine("================================================================================");
+
+                e = Console.ReadKey();
+                switch (e.Key)
+                {
+                    case ConsoleKey.UpArrow:
+                        cursor--;
+                        if (cursor < 0)
+                        {
+                            cursor = text.Length - 1;
+                        }
+                        break;
+                    case ConsoleKey.DownArrow:
+                        cursor++;
+                        if (cursor > text.Length - 1)
+                        {
+                            cursor = 0;
+                        }
+                        break;
+                    case ConsoleKey.Enter:
+                        onScene = false;
+                        break;
+                    default:
+                        break;
+                }
             }
-            Console.WriteLine("================================================================================");
 
-            Console.WriteLine("");
-            Console.WriteLine("원하시는 행동을 입력해주세요.");
-            Console.Write(">> ");
-            e = Console.ReadKey();
-            switch (e.Key)
+            switch (cursor)
             {
-                case ConsoleKey.D1:
+                case 0:
                     StroyScene();
                     break;
-                case ConsoleKey.D2:
+                case 1:
                     // C:\JsonTest 경로 안에있는 save.json 파일을 string read에 넣는다.(파일 읽기)
                     string read = File.ReadAllText(@"C:\JsonTest\save.json");
                     // json문자열을 Player클래스 객체 player로 변환
                     player = JsonConvert.DeserializeObject<Player>(read);
+
+                    Console.SetCursorPosition(25, 15);
                     Console.WriteLine("불러오는중 입니다.");
                     Thread.Sleep(1500);
                     MainScene();
                     break;
-                case ConsoleKey.D3:
+                case 2:
                     Console.WriteLine("종료합니다...");
                     break;
                 default:
-                    Console.WriteLine("올바른 수를 입력해주시오.");
-                    TitleScene();
                     break;
             }
+
+
         }
+        /*
+        public void TitleScene()
+        {
+            string[] text = {"1 . 시작하기", "2 . 이어하기", "3 . 종료하기"};
+
+            // 커서 좌표 초기설정
+            int x = 25;
+            int y = 11;
+
+            while (true)
+            {
+                // 화면 초기화
+                Console.Clear();
+
+                Console.WriteLine("================================================================================");
+                Console.WriteLine("=                         C# Console Game RPG                                  =");
+                Console.WriteLine("=                                                                              =");
+                Console.WriteLine("=                                                                              =");
+                Console.WriteLine("=            C #                              R-o l e                          =");
+                Console.WriteLine("=             C o n s o l e                     P-l a y i n g                  =");
+                Console.WriteLine("=              G a m e                            G-a m e                      =");
+                Console.WriteLine("=                                                                              =");
+                Console.WriteLine("=                                                                              =");
+                Console.WriteLine("=                                                       Main by - GreatJun     =");
+                Console.WriteLine("================================================================================");
+                for (int i = 0; i < text.Length; i++)
+                {
+                    Console.WriteLine($"=========================    {text[i]}    ===================================");
+                }
+                Console.WriteLine("================================================================================");
+
+                Console.SetCursorPosition(x, y);
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.Write("  ->");
+                Console.ResetColor();
+                e = Console.ReadKey();
+                switch (e.Key)
+                {
+                    case ConsoleKey.UpArrow:
+                        y--;
+                        break;
+                    case ConsoleKey.DownArrow:
+                        y++;
+                        break;
+                    case ConsoleKey.Enter:
+                        if(y == 11) StroyScene();
+                        else if(y == 12)
+                        {
+                            // C:\JsonTest 경로 안에있는 save.json 파일을 string read에 넣는다.(파일 읽기)
+                            string read = File.ReadAllText(@"C:\JsonTest\save.json");
+                            // json문자열을 Player클래스 객체 player로 변환
+                            player = JsonConvert.DeserializeObject<Player>(read);
+
+                            Console.SetCursorPosition(x, 15);
+                            Console.WriteLine("불러오는중 입니다.");
+                            Thread.Sleep(1500);
+                            MainScene();
+                        }
+                        else if(y == 13)
+                        {
+                            Console.WriteLine("종료합니다...");
+                        }
+                        break;
+                    default:
+                        break;
+                }
+                if (y < 11)
+                {
+                    y = 13;
+                }
+                else if (y > 13)
+                {
+                    y = 11;
+                }
+            }
+        }
+        */
 
         // 2. 스토리 및 상황설명 화면
         public void StroyScene()
         {
-            // 화면 초기화
-            Console.Clear();
+            string[] text = { "==================    1. 마을로 가본다.                   ======================",
+                "==================    2. 피 냄새가 나는 곳으로 가본다.    ======================" };
 
-            Console.WriteLine("당신은 어떤 숲에서 정신을 차렸다...");
-            Console.WriteLine("주변에 있는 것이라고는 나무와 식물들뿐....");
-            Console.WriteLine("그렇게 정신을 차리던 도중 저 멀리 마을로 예상되는 빛이 보이기 시작했고");
-            Console.WriteLine("그와 동시에 멀지 않은 곳에서 비릿한 피 냄새가 내 코를 찌르기 시작했다...");
-            Console.WriteLine("");
-            Console.WriteLine("1. 마을로 가본다.");
-            Console.WriteLine("2. 피 냄새가 나는 곳으로 가본다.");
-            Console.WriteLine("---------------------------------------------------");
-            Console.WriteLine("원하시는 행동을 입력해주세요.");
-            Console.Write(">> ");
-            e = Console.ReadKey();
-            switch (e.Key)
+            // 초기 커서 설정
+            int cursor = 0;
+
+            bool onScene = true;
+
+            while (onScene)
             {
-                case ConsoleKey.D1:
+                // 화면 초기화
+                Console.Clear();
+
+                Console.WriteLine("================================================================================");
+                Console.WriteLine("= 당신은 어떤 숲에서 정신을 차렸다...                                          =");
+                Console.WriteLine("=                                                                              =");
+                Console.WriteLine("= 주변에 있는 것이라고는 나무와 식물들뿐....                                   =");
+                Console.WriteLine("=                                                                              =");
+                Console.WriteLine("= 그렇게 정신을 차리던 도중 저 멀리 마을로 예상되는 빛이 보이기 시작했고       =");
+                Console.WriteLine("=                                                                              =");
+                Console.WriteLine("= 그와 동시에 멀지 않은 곳에서 비릿한 피 냄새가 내 코를 찌르기 시작했다...     =");
+                Console.WriteLine("================================================================================");
+                for (int i = 0; i < text.Length; i++)
+                {
+                    if (cursor == i) Console.ForegroundColor = ConsoleColor.Red;
+                    Console.WriteLine(text[i]);
+                    Console.ResetColor();
+                }
+                Console.WriteLine("================================================================================");
+
+                e = Console.ReadKey();
+                switch (e.Key)
+                {
+                    case ConsoleKey.UpArrow:
+                        cursor--;
+                        if (cursor < 0) cursor = text.Length - 1;
+                        break;
+                    case ConsoleKey.DownArrow:
+                        cursor++;
+                        if (cursor > text.Length - 1) cursor = 0;
+                        break;
+                    case ConsoleKey.Enter:
+                        onScene = false;
+                        break;
+                    default:
+                        break;
+                }
+            }
+            switch(cursor)
+            {
+                case 0:
                     Console.Clear();
-                    Console.WriteLine("뒤에서 들려오는 정체모를 소리를 뒤로하고 마을로 달렸다..."); 
+                    Console.ForegroundColor = ConsoleColor.Green;
+                    Console.WriteLine("뒤에서 들려오는 정체모를 소리를 뒤로하고 마을로 달렸다...");
+                    Console.ResetColor();
                     Thread.Sleep(3000);
                     MainScene();
                     break;
-                case ConsoleKey.D2:
+                case 1:
                     Console.Clear();
                     Console.WriteLine("아뿔싸! 기억이 났다.....");
                     Console.WriteLine("나는 드래곤 원정을 하던 도중이었고 승산이 없다고 느껴져");
@@ -285,65 +434,87 @@ namespace TextRPG
                     TitleScene();
                     break;
                 default:
-                    Console.WriteLine("올바른 수를 입력해주십시오.");
-                    Thread.Sleep(1000);
-                    StroyScene();
                     break;
             }
-
         }
 
         // 3. 메인화면
         public void MainScene()
         {
-            //화면 초기화
-            Console.Clear();
+            string[] text = { "=========================    1 . 상태창      ===================================",
+            "=========================    2 . 인벤토리    ===================================",
+            "=========================    3 . 상점        ===================================",
+            "=========================    4 . 던전        ===================================",
+            "=========================    5 . 타이틀 화면 ===================================",
+            "=========================    6 . 저장하기    ==================================="};
+            // 커서 초기값
+            int cursor = 0;
+            bool onScene = true;
 
-            Console.WriteLine("================================================================================");
-            Console.WriteLine("=                                                                              =");
-            Console.WriteLine("=      :시골의 작은 마을이다. 활기가 넘치고 여기저기서 웃음소리가 들린다.:     =");
-            Console.WriteLine("=                                                                              =");
-            Console.WriteLine("=                                                                              =");
-            Console.WriteLine("=                                                                              =");
-            Console.WriteLine("=                                                                              =");
-            Console.WriteLine("=                            어떤일을 할까?                                    =");
-            Console.WriteLine("=                                                                              =");
-            Console.WriteLine("================================================================================");
-            Console.WriteLine("=========================    1 . 상태창      ===================================");
-            Console.WriteLine("=========================    2 . 인벤토리    ===================================");
-            Console.WriteLine("=========================    3 . 상점        ===================================");
-            Console.WriteLine("=========================    4 . 던전        ===================================");
-            Console.WriteLine("=========================    5 . 타이틀 화면 ===================================");
-            Console.WriteLine("=========================    6 . 저장하기    ===================================");
-            Console.WriteLine("================================================================================");
-
-            Console.WriteLine("");
-            Console.WriteLine("원하시는 행동을 입력해주세요.");
-            Console.Write(">> ");
-            e = Console.ReadKey();
-            switch (e.Key) 
+            while (onScene)
             {
-                case ConsoleKey.D1:
+                //화면 초기화
+                Console.Clear();
+
+                Console.WriteLine("================================================================================");
+                Console.WriteLine("=                                                                              =");
+                Console.WriteLine("=      :시골의 작은 마을이다. 활기가 넘치고 여기저기서 웃음소리가 들린다.:     =");
+                Console.WriteLine("=                                                                              =");
+                Console.WriteLine("=                                                                              =");
+                Console.WriteLine("=                                                                              =");
+                Console.WriteLine("=                                                                              =");
+                Console.WriteLine("=                            어떤일을 할까?                                    =");
+                Console.WriteLine("=                                                                              =");
+                Console.WriteLine("================================================================================");
+                for (int i = 0; i < text.Length; i++)
+                {
+                    if (cursor == i) Console.ForegroundColor = ConsoleColor.Red;
+                    Console.WriteLine(text[i]);
+                    Console.ResetColor();
+                }
+                Console.WriteLine("================================================================================");
+
+                e = Console.ReadKey();
+                switch(e.Key)
+                {
+                    case ConsoleKey.UpArrow:
+                        cursor--;
+                        if(cursor < 0) cursor = text.Length - 1;
+                        break;
+                    case ConsoleKey.DownArrow:
+                        cursor++;
+                        if (cursor > text.Length-1) cursor = 0;
+                        break;
+                    case ConsoleKey.Enter:
+                        onScene = false;
+                        break;
+                    default:
+                        break;
+                }
+            }
+            switch(cursor)
+            {
+                case 0:
                     Console.Clear();
                     Statistics();
                     break;
-                case ConsoleKey.D2:
+                case 1:
                     Console.Clear();
                     Inventory();
                     break;
-                case ConsoleKey.D3:
+                case 2:
                     Console.Clear();
                     Shop();
                     break;
-                case ConsoleKey.D4:
+                case 3:
                     Console.Clear();
                     InDungeon();
                     break;
-                case ConsoleKey.D5:
+                case 4:
                     Console.Clear();
                     TitleScene();
                     break;
-                case ConsoleKey.D6:
+                case 5:
                     // Json
                     //player클래스를 Json 객체로 생성 ( List를 Json으로 변환 )
                     string save = JsonConvert.SerializeObject(player);
@@ -354,10 +525,6 @@ namespace TextRPG
                     MainScene();
                     break;
                 default:
-                    Console.Clear();
-                    Console.WriteLine("올바른 수를 입력해주십시오.");
-                    Thread.Sleep(1000);
-                    MainScene();
                     break;
             }
         }
@@ -393,12 +560,10 @@ namespace TextRPG
             Console.WriteLine("================================================================================");
             Console.WriteLine("                       Gold : {0}                                               ", player.Gold);
             Console.WriteLine("================================================================================");
-            Console.WriteLine("=            메인화면으로 돌아가려면 Enter를 입력해주세요.                      =");
+            Console.ForegroundColor = ConsoleColor.Red;
+            Console.WriteLine("             메인화면으로 돌아가려면 Enter를 입력해주세요.                       ");
+            Console.ResetColor();
             Console.WriteLine("================================================================================");
-
-            Console.WriteLine("");
-            Console.WriteLine("원하시는 행동을 입력해주세요.");
-            Console.Write(">> ");
             e = Console.ReadKey();
             switch(e.Key)
             {
@@ -406,8 +571,6 @@ namespace TextRPG
                     MainScene();
                     break;
                 default:
-                    Console.WriteLine("올바른 수를 입력하시오.");
-                    Thread.Sleep(1000);
                     Statistics();
                     break;
             }
@@ -416,48 +579,81 @@ namespace TextRPG
         // 던전
         public void InDungeon()
         {
-            // 화면 초기화
-            Console.Clear();
+            string[] text = { "================================  하급던전  ====================================",
+            "================================  중급던전  ====================================",
+            "================================  상급던전  ====================================",
+            "================================    지옥    ====================================",
+            "================================  메인화면  ===================================="};
+            // 커서 초기값
+            int cursor = 0;
+            bool onScene = true;
 
-            Console.WriteLine("================================================================================");
-            Console.WriteLine("=                            1. 하급던전                                       =");
-            Console.WriteLine("================================================================================");
-            Console.WriteLine("=                            2. 중급던전                                       =");
-            Console.WriteLine("================================================================================");
-            Console.WriteLine("=                            3. 상급던전                                       =");
-            Console.WriteLine("================================================================================");
-            Console.WriteLine("=                            4.   지옥                                         =");
-            Console.WriteLine("================================================================================");
-            Console.WriteLine("=                            5. 메인화면                                       =");
-            Console.WriteLine("================================================================================");
-            Console.WriteLine("=               체력은 던전에서 나오면 자동으로 회복됩니다.                    =");
-            Console.WriteLine("================================================================================");
-
-            Console.WriteLine(" ");
-            Console.WriteLine("원하시는 행동을 입력해주세요.");
-            Console.Write(">> ");
-            e = Console.ReadKey();
-            switch (e.Key)
+            while (onScene)
             {
-                case ConsoleKey.D1:
+                // 화면 초기화
+                Console.Clear();
+
+                Console.WriteLine("================================================================================");
+                for(int i = 0;  i < text.Length; i++)
+                {
+                    if (cursor == i) Console.ForegroundColor = ConsoleColor.Red;
+                    Console.WriteLine(text[i]);
+                    Console.ResetColor();
+                }
+                Console.WriteLine("================================================================================");
+                Console.ForegroundColor = ConsoleColor.Blue;
+                Console.WriteLine("=               체력은 던전에서 나오면 자동으로 회복됩니다.                    =");
+                Console.ResetColor();
+                Console.WriteLine("================================================================================");
+
+                e = Console.ReadKey();
+                switch(e.Key)
+                {
+                    case ConsoleKey.UpArrow:
+                        cursor--;
+                        if (cursor < 0) cursor = text.Length - 1;
+                        break;
+                    case ConsoleKey.DownArrow:
+                        cursor++;
+                        if (cursor > text.Length - 1) cursor = 0;
+                        break;
+                    case ConsoleKey.Enter:
+                        onScene = false;
+                        break;
+                    default:
+                        break;
+                }
+            }
+            switch(cursor)
+            {
+                case 0:
                     Program.LowClass(player);
                     break;
-                case ConsoleKey.D2:
+                case 1:
+                    Console.SetCursorPosition(30, 10);
+                    Console.ForegroundColor = ConsoleColor.Green;
                     Console.WriteLine("아직 미구현 입니다.");
+                    Console.ResetColor();
                     Thread.Sleep(1500);
                     MainScene();
                     break;
-                case ConsoleKey.D3:
+                case 2:
+                    Console.SetCursorPosition(30, 10);
+                    Console.ForegroundColor = ConsoleColor.Green;
                     Console.WriteLine("아직 미구현 입니다.");
+                    Console.ResetColor();
                     Thread.Sleep(1500);
                     MainScene();
                     break;
-                case ConsoleKey.D4:
+                case 3:
+                    Console.SetCursorPosition(30, 10);
+                    Console.ForegroundColor = ConsoleColor.Green;
                     Console.WriteLine("아직 미구현 입니다.");
+                    Console.ResetColor();
                     Thread.Sleep(1500);
                     MainScene();
                     break;
-                case ConsoleKey.D5:
+                case 4:
                     MainScene();
                     break;
                 default:
@@ -468,138 +664,176 @@ namespace TextRPG
         // 인벤토리
         public void Inventory()
         {
-            // 화면 초기화
-            Console.Clear();
+            // 커서 초기화
+            int cursor = 0;
+            bool onScene = true;
 
-            ConsoleTable inventoryTable = new ConsoleTable("순서","이름", "효과", "가격", "설명");
-
-            Console.WriteLine("[아이템 목록]");
-            Console.WriteLine("");
-            string isEquipment = "";
-            for (int i = 0; i < player.inventory.Count; i++)
+            while (onScene)
             {
-                if (player.isWearingSwrod == player.inventory[i].Name || player.isWearingArmor == player.inventory[i].Name) isEquipment = "[E]";
-                else isEquipment = "";
-                inventoryTable.AddRow($"{i}", $"{isEquipment} {player.inventory[i].Name}", $"{player.inventory[i].Effect}", $"{player.inventory[i].Price}", $"{player.inventory[i].Explanation}").Configure(o => o.EnableCount = false);
+                // 화면 초기화
+                Console.Clear();
+
+                ConsoleTable inventoryTable = new ConsoleTable("순서", "이름", "효과", "가격", "설명");
+
+                Console.WriteLine("[아이템 목록]");
+                Console.WriteLine("");
+                Console.WriteLine(" ㅣ 이름 | 효과 | 가격 | 설명");
+                string isEquipment = "";
+                for (int i = 0; i < player.inventory.Count; i++)
+                {
+                    if (player.isWearingSwrod == player.inventory[i].Name || player.isWearingArmor == player.inventory[i].Name) isEquipment = "[E]";
+                    else isEquipment = "";
+                    if (cursor == i) Console.ForegroundColor = ConsoleColor.Red;
+                    Console.WriteLine($" {isEquipment} l {player.inventory[i].Name} l {player.inventory[i].Effect} l {player.inventory[i].Price} l {player.inventory[i].Explanation}");
+                    //inventoryTable.AddRow($"{i}", $"{isEquipment} {player.inventory[i].Name}", $"{player.inventory[i].Effect}", $"{player.inventory[i].Price}", $"{player.inventory[i].Explanation}").Configure(o => o.EnableCount = false);
+                    Console.ResetColor();
+                }
+                //inventoryTable.Write();
+
+                Console.WriteLine("");
+                Console.WriteLine("================================================================================");
+                Console.ForegroundColor = ConsoleColor.Blue;
+                Console.WriteLine("                        착용할 아이템을 골라주십시오.                           ");
+                Console.ResetColor();
+                Console.WriteLine("================================================================================");
+                Console.ForegroundColor = ConsoleColor.Blue;
+                Console.WriteLine("               이름 내림차순 정렬 Insert키, 오름차순 정렬 Home키                ");
+                Console.ResetColor();
+                Console.WriteLine("================================================================================");
+                Console.ForegroundColor = ConsoleColor.Blue;
+                Console.WriteLine("        아이템 능력치 내임차순 정렬 RightArrow키, 오름차순 LeftArrow키          ");
+                Console.ResetColor();
+                Console.WriteLine("================================================================================");
+                Console.ForegroundColor = ConsoleColor.Blue;
+                Console.WriteLine("                    뒤로 돌아가려면 BackSpace를 눌러주십시오.                   ");
+                Console.ResetColor();
+                Console.WriteLine("================================================================================");
+
+                e = Console.ReadKey();
+                switch (e.Key)
+                {
+                    case ConsoleKey.UpArrow:
+                        cursor--;
+                        if (cursor < 0) cursor = player.inventory.Count - 1;
+                        break;
+                    case ConsoleKey.DownArrow:
+                        cursor++;
+                        if (cursor > player.inventory.Count - 1) cursor = 0;
+                        break;
+                    case ConsoleKey.Backspace:
+                        MainScene();
+                        break;
+                    case ConsoleKey.Insert:
+                        // OrderBy를 이용한 이름 내림차순 정렬
+                        player.inventory = player.inventory.OrderBy(item => item.Name).ToList();
+                        Inventory();
+                        break;
+                    case ConsoleKey.Home:
+                        // OrderByDescending를 이용한 이름 오름차순 정렬
+                        player.inventory = player.inventory.OrderByDescending(item => item.Name).ToList();
+                        Inventory();
+                        break;
+                    case ConsoleKey.RightArrow:
+                        // LINQ를 이용한 아이템 능력치 내림차순 정렬
+                        player.inventory = (from item in player.inventory
+                                            orderby item.Effect
+                                            select item).ToList();
+                        Inventory();
+                        break;
+                    case ConsoleKey.LeftArrow:
+                        // LINQ를 이용한 아이템 장비종류(Enum)(Swrod, Armor) 오름차순 정렬
+                        player.inventory = (from item in player.inventory
+                                            orderby item.equipments descending
+                                            select item).ToList();
+                        Inventory();
+                        break;
+                    case ConsoleKey.Enter:
+                        onScene = false;
+                        break;
+                    default:
+                        break;
+                }
             }
-            inventoryTable.Write();
-
-            Console.WriteLine("");
-            Console.WriteLine("================================================================================");
-            Console.WriteLine("                        착용할 아이템을 골라주십시오.                           ");
-            Console.WriteLine("================================================================================");
-            Console.WriteLine("                    뒤로 돌아가려면 Enter를 눌러주십시오.                       ");
-            Console.WriteLine("================================================================================");
-            Console.WriteLine("");
-            Console.Write(">> ");
-            e = Console.ReadKey();
-
-            switch (e.Key)
+            switch(cursor)
             {
-                case ConsoleKey.D0:
-                    player.EquipItem(0);
+                case 0:
+                case 1:
+                case 2:
+                case 3:
+                case 4:
+                case 5:
+                case 6:
+                case 7:
+                case 8:
+                case 9:
+                    player.EquipItem(cursor);
                     Inventory();
-                    break;
-                case ConsoleKey.D1:
-                    player.EquipItem(1);
-                    Inventory();
-                    break;
-                case ConsoleKey.D2:
-                    player.EquipItem(2);
-                    Inventory();
-                    break;
-                case ConsoleKey.D3:
-                    player.EquipItem(3);
-                    Inventory();
-                    break;
-                case ConsoleKey.D4:
-                    player.EquipItem(4);
-                    Inventory();
-                    break;
-                case ConsoleKey.D5:
-                    player.EquipItem(5);
-                    Inventory();
-                    break;
-                case ConsoleKey.D6:
-                    player.EquipItem(6);
-                    Inventory();
-                    break;
-                case ConsoleKey.D7:
-                    player.EquipItem(7);
-                    Inventory();
-                    break;
-                case ConsoleKey.D8:
-                    player.EquipItem(8);
-                    Inventory();
-                    break;
-                case ConsoleKey.DownArrow:
-                    // OrderBy를 이용한 이름 내림차순 정렬
-                    player.inventory = player.inventory.OrderBy(item => item.Name).ToList();
-                    Inventory();
-                    break;
-                case ConsoleKey.UpArrow:
-                    // OrderByDescending를 이용한 이름 오름차순 정렬
-                    player.inventory = player.inventory.OrderByDescending(item => item.Name).ToList();
-                    Inventory();
-                    break;
-                case ConsoleKey.RightArrow:
-                    // LINQ를 이용한 아이템 능력치 내림차순 정렬
-                    player.inventory = (from item in player.inventory
-                                        orderby item.Effect
-                                        select item).ToList();
-                    Inventory();
-                    break;
-                case ConsoleKey.LeftArrow:
-                    // LINQ를 이용한 아이템 장비종류(Enum)(Swrod, Armor) 오름차순 정렬
-                    player.inventory = (from item in player.inventory
-                                        orderby item.equipments descending
-                                        select item).ToList();
-                    Inventory();
-                    break;
-                case ConsoleKey.Enter:
-                    MainScene();
                     break;
                 default:
                     break;
-            }
 
+            }
         }
 
         // 상점 입구
         public void Shop()
         {
-            // 화면 초기화
-            Console.Clear();
+            string[] text = { "================  1. 아이템 구입  =================" ,
+            "================  2. 아이템 판매  =================",
+            "===============  3. 메인화면 이동 ================="};
 
-            Console.WriteLine("여기 없는건 어딜 가도 구할 수 없습니다~");
-            Console.WriteLine("일단 들어와 보시라~ 와서 구경이라도 하고 가십쇼!");
-            Console.WriteLine("");
-            Console.WriteLine("1. 아이템 구입");
-            Console.WriteLine("2. 아이템 판매");
-            Console.WriteLine("3. 메인화면 이동");
-            Console.WriteLine("");
-            Console.WriteLine("원하시는 행동을 입력해주세요.");
-            Console.Write(">> ");
-            e = Console.ReadKey();
+            int cursor = 0;
+            bool onScene = true;
 
-            switch (e.Key)
+            while (onScene)
             {
-                case ConsoleKey.D1:
+                // 화면 초기화
+                Console.Clear();
+
+                Console.WriteLine("===================================================");
+                Console.WriteLine("=      여기 없는건 어딜 가도 구할 수 없습니다~    =");
+                Console.WriteLine("= 일단 들어와 보시라~ 와서 구경이라도 하고 가십쇼!=");
+                Console.WriteLine("===================================================");
+                for(int i = 0; i < text.Length; i++)
+                {
+                    if(cursor == i) Console.ForegroundColor = ConsoleColor.Red;
+                    Console.WriteLine(text[i]);
+                    Console.ResetColor();
+                }
+                Console.WriteLine("===================================================");
+
+                e = Console.ReadKey();
+                switch (e.Key)
+                {
+                    case ConsoleKey.UpArrow:
+                        cursor--;
+                        if(cursor < 0) cursor = text.Length - 1;
+                        break;
+                    case ConsoleKey.DownArrow:
+                        cursor++;
+                        if (cursor > text.Length - 1) cursor = 0;
+                        break;
+                    case ConsoleKey.Enter:
+                        onScene = false;
+                        break;
+                    default:
+                        break;
+                }
+            }
+            switch(cursor)
+            {
+                case 0:
                     BuyShop();
                     break;
-                case ConsoleKey.D2:
+                case 1:
                     SellShop();
                     break;
-                case ConsoleKey.D3:
+                case 2:
                     MainScene();
                     break;
                 default:
-                    Console.WriteLine("올바른 수를 입력하시오.");
-                    Thread.Sleep(1000);
-                    Shop();
                     break;
             }
-
         }
 
         // 구입 상점
